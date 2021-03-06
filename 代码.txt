@@ -1,0 +1,355 @@
+// import './js/libs/weapp-adapter'
+// import './js/libs/symbol'
+
+// import Main from './js/main'
+
+// new Main()
+
+// let flag=true
+// const canvas = wx.createCanvas()
+// const context = canvas.getContext('2d') // 创建一个 2d context
+// context.fillStyle = '#1aad19' // 矩形颜色
+// const zfx = canvas.getContext('2d')
+// zfx.fillStyle='#1aada9'
+// const { windowWidth, windowHeight } = wx.getSystemInfoSync()
+// function drawRect(x, y) {
+//   context.clearRect(0, 0, windowWidth, windowHeight)
+//   context.fillStyle = '#1aad19'
+  
+//   context.fillRect(x, y, 100, 100)
+//   if(flag)zfx.fillStyle='#1aada9'
+//   zfx.fillRect(100,100,50,50)
+// }
+
+// function cm(){
+//   wx.onTouchEnd(function (e) { 
+//     console.log(e.touches)//打印触摸点的信息
+//     let x=e.changedTouches[0].clientX//获取触摸点的x坐标
+//     let y=e.changedTouches[0].clientY//获取y坐标
+//     zfx.fillRect(x,y,50,50)
+//     zfx.fillRect(200,200,50,50)
+//     if(x<100&&y<100)flag=false
+//   })
+
+// }
+
+// const rectX = canvas.width / 2 - 50
+// let rectY = 0
+
+// setInterval(function(){
+// drawRect(rectX, rectY++)
+// if(rectY>windowHeight)rectY=0
+
+// },16)
+// cm()
+
+
+// const canvas = wx.createCanvas()
+// const context = canvas.getContext('2d') // 创建一个 2d context
+// const { windowWidth, windowHeight } = wx.getSystemInfoSync()
+// //横屏不适配问题————————————
+// canvas.width = wx.getSystemInfoSync().windowWidth;
+// canvas.height = wx.getSystemInfoSync().windowHeight;
+// //————————————————————
+//  class azfx{
+//   constructor(){
+//     this.fk = canvas.getContext('2d')
+//     this.len=Math.random()*50+20
+//     this.speed=1+this.len/20
+//     this.x=Math.floor(Math.random() * (windowWidth - this.len/2) )
+//     this.y=Math.random() * (windowHeight - this.len/2)*-1
+//     this.flag=false
+//   }
+//    drawzfx(){
+//      if(this.flag){
+//       this.fk.fillStyle='#1aada9'
+//      }else {
+//       this.fk.fillStyle='#123456'
+//      }
+//     if(this.y>windowHeight){
+//       this.x=Math.floor(Math.random() * (windowWidth - this.len/2) )
+//       this.y=Math.random() * (windowHeight - this.len/2)*-1
+//     }
+//     this.fk.fillRect(this.x,this.y+=this.speed,this.len,this.len)
+
+//   }
+//   tou(x,y){
+//     if(x>=this.x&&x<=this.x+this.len&&y>this.y&&y<this.y+this.len){
+//       this.flag=true
+//     }
+//   }
+  
+// }
+// let zfxs=[]
+// for(let i=0;i<50;i++)zfxs[i]=new azfx()
+
+// let s=wx.createImage()
+// s.src='images/bullet.png'
+
+
+// setInterval(function(){
+//   context.clearRect(0, 0, windowWidth, windowHeight)
+//   for(let i=0;i<50;i++)zfxs[i].drawzfx()
+//   context.drawImage(s,100,100,10,10)
+// }, 16)
+
+// wx.onTouchStart((e) => {
+//   console.log()
+//   let x=e.changedTouches[0].clientX//获取触摸点的x坐标
+//   let y=e.changedTouches[0].clientY//获取y坐标
+//   for(let i=0;i<50;i++)zfxs[i].tou(x,y)
+  
+// })
+
+
+//------------------------------------------------------------------------
+wx.setPreferredFramesPerSecond(40);
+const canvas = wx.createCanvas()
+const bg = canvas.getContext('2d') //背景
+const { windowWidth, windowHeight } = wx.getSystemInfoSync()//屏幕的宽和高设置为windowWidth和windowHeight
+//横屏不适配问题————————————
+canvas.width = wx.getSystemInfoSync().windowWidth;
+canvas.height = wx.getSystemInfoSync().windowHeight;
+//————————————————————
+let score=0
+let time=0
+let fps=5
+let landx1=0
+let landx2=1200
+let landspeed=1.5
+let land1=wx.createImage()
+land1.src='images/land.png'//1200*12
+let land2=wx.createImage()
+land2.src='images/land.png'
+var runner
+var obs=[]
+var obsbox=[]
+let obsdist=100
+let gamestart=false
+let gameover=true
+
+
+
+function timer(){
+time++
+if(time>1000)time=time-1000
+// console.log(time)
+}
+
+function bgackground(){//背景
+  bg.clearRect(0, 0, windowWidth, windowHeight)
+  bg.fillStyle='#ffffff'
+  bg.fillRect(0, 0, windowWidth, windowHeight)
+  bg.drawImage(land1,landx1-=landspeed,windowHeight-100)
+  bg.drawImage(land2,landx2-=landspeed,windowHeight-100)
+  if(landx1<-1200)landx1=landx2+1200
+  if(landx2<-1200)landx2=landx1+1200
+  bg.fillStyle='#000000'
+  bg.font = '20'
+  if(time%30 ==0)score++
+  bg.fillText("score:"+score,10,20)
+}
+
+class collisionBox{//碰撞盒子
+  constructor(x,y,w,h){
+    this.x=x
+    this.y=y
+    this.w=w
+    this.h=h
+  }
+}
+
+class Runner{//主角类
+  constructor(){
+    this.width=44
+    this.height=47
+    this.x=100
+    this.y=windowHeight-100+12-this.height
+    this.jumping=false
+    this.jumpend=true
+    this.dorp=false
+    this.speed=36
+    this.maxjump=100
+    this.initjumpspeed=3.5
+    this.jumpspeed=this.initjumpspeed
+    this.incjumpspeed=0.05
+    this.life=1
+    this.runimg1=wx.createImage()
+    this.runimg1.src='images/dino3.png'//44*47
+     this.runimg2=wx.createImage()
+     this.runimg2.src='images/dino2.png'
+     this.jumpimg=wx.createImage()
+     this.jumpimg.src='images/dino1.png'
+     this.head=new collisionBox(23,3,18,11)
+     this.body=new collisionBox(3,20,26,11)
+     this.foot=new collisionBox(12,32,12,13)
+  }
+  Runing(){
+    if(!this.jumping){
+      if(time%this.speed>this.speed/2){
+        bg.drawImage(this.runimg1,this.x,this.y)
+      }else{
+        bg.drawImage(this.runimg2,this.x,this.y)
+      }
+    }else{
+      bg.drawImage(this.jumpimg,this.x,this.y)
+    }
+  }
+  Jump(){
+    if(this.jumping){
+      if(!this.dorp){
+        this.y-=this.jumpspeed
+        this.jumpspeed-=this.incjumpspeed
+        if(this.speed<=0){
+          this.dorp=true
+        }
+      }else{
+        this.y+=this.jumpspeed
+        this.jumpspeed+=this.incjumpspeed
+      }
+      if(this.y>windowHeight-100+12-this.height){
+        this.y=windowHeight-100+12-this.height
+        this.jumpspeed=this.initjumpspeed
+        this.jumping=false
+        this.jumpend=true
+      }
+    }
+
+  }
+}
+
+function collisionCheck(obsx,obsy,obsw,obsh){//碰撞检测
+  if(runner.x<obsx+obsw&&runner.x+runner.width>obsx&&runner.y<obsy+obsh&&runner.y+runner.height>obsy){
+    if(runner.x+runner.head.x<obsx+obsw&&runner.x+runner.head.x+runner.head.w>obsx&&runner.y+runner.head.y<obsy+obsh&&runner.y+runner.head.y+runner.head.h>obsy){
+      runner.life--
+      console.log('head')
+    }else if(runner.x+runner.body.x<obsx+obsw&&runner.x+runner.body.x+runner.body.w>obsx&&runner.y+runner.body.y<obsy+obsh&&runner.y+runner.body.y+runner.body.h>obsy){
+      runner.life--
+      console.log('body')
+    }else if(runner.x+runner.foot.x<obsx+obsw&&runner.x+runner.foot.x+runner.foot.w>obsx&&runner.y+runner.foot.y<obsy+obsh&&runner.y+runner.foot.y+runner.foot.h>obsy){
+      runner.life--
+      console.log('foot')
+    }
+    console.log('check')
+  }
+  }
+
+class Obstacle{//障碍物类
+  constructor(width,height,image){
+    this.width=width
+    this.height=height
+    this.image=image
+  }
+}
+
+class ObstacleBox{//障碍物盒子
+  constructor(tx){
+    this.num=Math.round(Math.random()*10)%6
+    this.width=obs[this.num].width
+    this.height=obs[this.num].height
+    this.x=tx+Math.random()*300+obsdist
+    this.y=windowHeight-100-this.height+9
+    this.image=wx.createImage()
+    this.image.src='images/'+obs[this.num].image+'.png'
+    
+  }
+  move(){
+    bg.drawImage(this.image,this.x,this.y)
+    this.x-=landspeed
+  }
+}
+
+function Initial(){//初始化
+  time=0
+  fps=5
+  landx1=0
+  landx2=1200
+  score=0
+  runner=new Runner()
+  obs[0]=new Obstacle(25,50,'obstacle1')
+  obs[1]=new Obstacle(50,50,'obstacle2')
+  obs[2]=new Obstacle(75,50,'obstacle3')
+  obs[3]=new Obstacle(17,35,'obstacle4')
+  obs[4]=new Obstacle(34,35,'obstacle5')
+  obs[5]=new Obstacle(51,35,'obstacle6')
+  obsdist=250
+  obsbox[0]=new ObstacleBox(windowWidth)
+  for(let i=1;i<5;i++){
+    obsbox[i]=new ObstacleBox(obsbox[i-1].x)
+  }
+ }
+ Initial()
+
+function gamestartcondition(){
+  if(!gamestart){
+    bg.fillStyle='#ffffff'
+    bg.fillRect(0,0,windowWidth,windowHeight)
+    bg.fillStyle='#1aada9'
+    bg.fillRect(windowWidth/2-40,windowHeight/2-20,80,40)
+    bg.fillStyle='#000000'
+    bg.fillText('S t a r t',windowWidth/2-20,windowHeight/2)
+  }
+}
+
+function restart(){
+  if(gameover){
+    bg.fillStyle='#1aada9'
+    bg.fillRect(windowWidth/2-40,windowHeight/2-20,80,40)
+    bg.fillStyle='#000000'
+    bg.fillText('R e s t a r t',windowWidth/2-27,windowHeight/2)
+  }
+}
+
+ function moveObs(){
+  for(let i=0;i<obsbox.length;i++){
+    obsbox[i].move()
+    if(obsbox[i].x<0-obsbox[i].width){
+      // obsbox.shift()
+      // obsbox.push(new ObstacleBox(obsbox[obsbox.length-1].x))
+      obsbox[i]=new ObstacleBox(obsbox[i>0?i-1:obsbox.length-1].x)
+    }
+    collisionCheck(obsbox[i].x+3,obsbox[i].y+4,obsbox[i].width-6,obsbox[i].height-8)
+  }
+ }
+
+setInterval(function(){
+ if(gamestart){
+   if(!gameover){
+      // console.log(runner.y)
+  bgackground()
+  timer()
+  runner.Runing()
+  runner.Jump()
+  moveObs()
+  if(runner.life<=0)gameover=true
+    restart()
+   }
+ }else(
+  gamestartcondition()
+ )
+  }, fps)
+
+  wx.onTouchEnd((e) => {
+    let x=e.changedTouches[0].clientX//获取触摸点的x坐标
+    let y=e.changedTouches[0].clientY//获取y坐标
+    if(gamestart){
+      if(!gameover){
+        if(runner.jumpend){
+          runner.jumping=true
+          runner.jumpend=false
+          runner.dorp=false
+        
+        }
+      }else{
+        if(x>windowWidth/2-40&&x<windowWidth/2-40+80&&y>windowHeight/2-20&&y<windowHeight/2-20+40){
+          gameover=false
+          Initial()
+        }
+      }
+    }else{
+      if(x>windowWidth/2-40&&x<windowWidth/2-40+80&&y>windowHeight/2-20&&y<windowHeight/2-20+40){
+        gamestart=true
+        gameover=false
+      }
+}
+  })
